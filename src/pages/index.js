@@ -119,7 +119,6 @@ const StockRow = ({ stock }) => {
         {stock.today}$ ({stock.drop})
       </td>
       <td>
-        Price earnings:
         <span
           style={{
             color:
@@ -130,7 +129,6 @@ const StockRow = ({ stock }) => {
         </span>
       </td>
       <td>
-        Strategy:{" "}
         {stock.strategy && stock.strategy.includes("Pessimistic") ? "👎" : "👍"}
       </td>
     </tr>
@@ -164,23 +162,34 @@ const IndexPage = ({ data }) => {
     <Layout>
       <SEO title="Stonks - Overview" />
       <main>
-        <FilterInput value={filterBy} onKeyDown={value => setFilterBy(value)} />
-        <button
-          style={{
-            marginBottom: 16,
-          }}
-          onClick={() =>
-            setVisualisationMode(
-              visualisationMode === VISUALISATION_MODE.CARDS
-                ? VISUALISATION_MODE.LIST
-                : VISUALISATION_MODE.CARDS
-            )
-          }
-        >
-          Change visualisation
-        </button>
+        <div style={{ padding: 16 }}>
+          <FilterInput
+            value={filterBy}
+            onKeyDown={value => setFilterBy(value)}
+          />
+          <button
+            style={{
+              marginBottom: 16,
+            }}
+            onClick={() =>
+              setVisualisationMode(
+                visualisationMode === VISUALISATION_MODE.CARDS
+                  ? VISUALISATION_MODE.LIST
+                  : VISUALISATION_MODE.CARDS
+              )
+            }
+          >
+            Change visualisation
+          </button>
+        </div>
         {visualisationMode === VISUALISATION_MODE.LIST ? (
-          <table>
+          <table style={{ width: "100%" }}>
+            <thead style={{ backgroundColor: "#AAA" }}>
+              <td>Stock</td>
+              <td>Price (Drop)</td>
+              <td>Price earnings</td>
+              <td>Strategy</td>
+            </thead>
             {filteredStocks.map(node => (
               <StockRow stock={node} />
             ))}
