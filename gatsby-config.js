@@ -32,7 +32,7 @@ module.exports = {
       options: {
         // The `spreadsheetId` is required, it is found in the url of your document:
         // https://docs.google.com/spreadsheets/d/<spreadsheetId>/edit#gid=0
-        spreadsheetId: "11KjAyvWG9b_-55axmOHQ7M9ZmEl4RNsZ-T4dsfpTFjw",
+        spreadsheetId: "1g5FVVoOSj7IF2-kbmg7bYk9jU1ISEllAwNCi_WsxXIY",
 
         // The `spreadsheetName` is recommended, but optional
         // It is used as part of the id's during the node creation, as well as in the generated GraphQL-schema
@@ -65,11 +65,16 @@ module.exports = {
         //
         // By implementing a `filterNode(node): boolean` function, you can choose to eliminate some nodes before
         // they're added to Gatsby, the default behaviour is to include all nodes:
-        filterNode: () => true,
+        filterNode: node => !!node.stock,
 
         // By implementing a `mapNode(node): node` function, you can provide your own node transformations directly
         // during node sourcing, the default implementation is to return the node as is:
-        mapNode: node => node,
+        mapNode: node => {
+          return {
+            ...node,
+            today: node.today.replace(",", ""),
+          }
+        },
       },
     },
 

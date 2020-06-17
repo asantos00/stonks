@@ -4,6 +4,12 @@ import { Link, graphql } from "gatsby"
 import Layout from "../components/layout"
 import Image from "../components/image"
 import SEO from "../components/seo"
+import {
+  useTable,
+  useSortBy,
+  useGlobalFilter,
+  useAsyncDebounce,
+} from "react-table"
 
 const COLORS_BY_GROUP = {
   TECH: "green",
@@ -12,44 +18,6 @@ const COLORS_BY_GROUP = {
   SPAIN: "yellow",
   AVIATION: "orange",
   GERMANY: "black",
-}
-
-const GroupTag = ({ group = "" }) => {
-  return (
-    <div
-      style={{
-        padding: "2px 8px",
-        borderRadius: "3px",
-        color: "white",
-        backgroundColor: COLORS_BY_GROUP[group] || "grey",
-        fontSize: 10,
-        marginRight: "auto",
-      }}
-    >
-      {group.toUpperCase()}
-    </div>
-  )
-}
-
-const FilterInput = ({ onKeyDown, value = "" }) => {
-  return (
-    <React.Fragment>
-      <label for="filter-by" style={{ marginRight: 16 }}>
-        Filter by:
-      </label>
-      <input
-        id="filter-by"
-        type="text"
-        value={value}
-        onChange={e => {
-          onKeyDown(e.target.value)
-        }}
-      />
-      <div style={{ fontSize: 10 }}>
-        Try out filters like "bull", "amd" or "tech"
-      </div>
-    </React.Fragment>
-  )
 }
 
 const StockCard = ({ stock }) => (
@@ -95,43 +63,50 @@ const StockCard = ({ stock }) => (
   </div>
 )
 
-const StockRow = ({ stock }) => {
-  const [isHover, setIsHover] = useState(false)
-
+const GroupTag = ({ group = "" }) => {
   return (
-    <tr
-      onMouseEnter={() => setIsHover(true)}
-      onMouseLeave={() => setIsHover(false)}
+    <div
       style={{
-        backgroundColor: isHover ? "#ddd" : "transparent",
+        padding: "2px 8px",
+        borderRadius: "3px",
+        color: "white",
+        backgroundColor: COLORS_BY_GROUP[group] || "grey",
+        fontSize: 10,
+        marginRight: "auto",
       }}
     >
-      <td
-        style={{
-          minWidth: 110,
+      {group.toUpperCase()}
+    </div>
+  )
+}
+
+const FilterInput = ({
+  preGlobalFilteredRows,
+  globalFilter,
+  setGlobalFilter,
+}) => {
+  const [value, setValue] = React.useState(globalFilter)
+  const onChange = useAsyncDebounce(value => {
+    setGlobalFilter(value || undefined)
+  }, 200)
+  return (
+    <div style={{ marginLeft: 16 }}>
+      <label htmlFor="filter-by" style={{ marginRight: 16 }}>
+        Full-text search
+      </label>
+      <input
+        id="filter-by"
+        type="text"
+        value={value || ""}
+        onChange={e => {
+          setValue(e.target.value)
+          onChange(e.target.value)
         }}
-      >
-        <a href={stock.url} target="_blank">
-          {stock.stock}
-        </a>
-      </td>
-      <td>
-        {stock.today}$ ({stock.drop})
-      </td>
-      <td>
-        <span
-          style={{
-            color:
-              stock.trend && stock.trend.includes("Bull") ? "green" : "red",
-          }}
-        >
-          {stock.p_e__priceEarnings_}
-        </span>
-      </td>
-      <td>
-        {stock.strategy && stock.strategy.includes("Pessimistic") ? "👎" : "👍"}
-      </td>
-    </tr>
+      />
+      <div style={{ fontSize: 10 }}>
+        Try out filters like "tsla", "tech", "bull"
+      </div>
+    </div>
   )
 }
 
@@ -140,63 +115,153 @@ const VISUALISATION_MODE = {
   LIST: "list",
 }
 
+const columns = [
+  {
+    Header: "Stock",
+    accessor: "stock",
+    Cell: ({ row }) => {
+      return (
+        <a
+          href={row.values.url}
+          target="_blank"
+          rel="noopener"
+          style={{ textDecoration: "none" }}
+        >
+          {row.values.stock}
+        </a>
+      )
+    },
+  },
+  {
+    Header: "Current price",
+    accessor: "today",
+  },
+  {
+    Header: "Drop to buy",
+    accessor: "drop",
+  },
+  {
+    Header: "Buy",
+    accessor: "buy",
+  },
+  {
+    Header: "Take profit",
+    accessor: "tp__takeProfit_",
+  },
+  {
+    Header: "Potential",
+    accessor: "potential",
+  },
+  {
+    Header: "Price earnings",
+    accessor: "p_e__priceEarnings_",
+    Cell: ({ row }) => {
+      const isNA = row.values.p_e__priceEarnings_ === "N/A"
+      const textColor = isNA
+        ? "grey"
+        : row.values.trend.includes("Bull")
+        ? "green"
+        : "red"
+
+      return (
+        <span style={{ color: textColor }}>
+          {row.values.p_e__priceEarnings_ || "N/A"}
+        </span>
+      )
+    },
+  },
+  {
+    Header: "Strategy",
+    accessor: "strategy",
+    Cell: ({ value }) => {
+      return value === "Pessimistic" ? "👎" : "👍"
+    },
+  },
+  // Hidden
+  {
+    Header: "Trend",
+    accessor: "trend",
+  },
+  {
+    Header: "Group",
+    accessor: "group",
+  },
+]
+
+const StockTable = ({ data, columns }) => {
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    preGlobalFilteredRows,
+    setGlobalFilter,
+    state,
+  } = useTable(
+    {
+      columns,
+      data: data,
+      initialState: {
+        hiddenColumns: ["trend", "group"],
+      },
+    },
+    useGlobalFilter,
+    useSortBy
+  )
+  return (
+    <React.Fragment>
+      <FilterInput
+        preGlobalFilteredRows={preGlobalFilteredRows}
+        setGlobalFilter={setGlobalFilter}
+        globalFilter={state.globalFilter}
+      />
+      <table {...getTableProps()}>
+        <thead>
+          {headerGroups.map(headerGroup => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map(column => (
+                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                  {column.render("Header")}
+                  <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? " 🔽"
+                        : " 🔼"
+                      : ""}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody {...getTableBodyProps()}>
+          {rows.map(row => {
+            prepareRow(row)
+            return (
+              <tr {...row.getRowProps()}>
+                {row.cells.map(cell => (
+                  <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
+                ))}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </React.Fragment>
+  )
+}
 const IndexPage = ({ data }) => {
   const [filterBy, setFilterBy] = useState("")
-  const [visualisationMode, setVisualisationMode] = useState(
-    VISUALISATION_MODE.CARDS
-  )
-  const filteredStocks = data.allGoogleSpreadsheetStonks2020Stonks.nodes.filter(
-    node => {
-      return (
-        (node.stock &&
-          node.stock.toLowerCase().includes(filterBy.toLowerCase())) ||
-        (node.trend &&
-          node.trend.toLowerCase().includes(filterBy.toLowerCase())) ||
-        (node.group &&
-          node.group.toLowerCase().includes(filterBy.toLowerCase()))
-      )
-    }
-  )
 
   return (
     <Layout>
       <SEO title="Stonks - Overview" />
       <main>
-        <div style={{ padding: 16 }}>
-          <FilterInput
-            value={filterBy}
-            onKeyDown={value => setFilterBy(value)}
-          />
-          <button
-            style={{
-              marginBottom: 16,
-            }}
-            onClick={() =>
-              setVisualisationMode(
-                visualisationMode === VISUALISATION_MODE.CARDS
-                  ? VISUALISATION_MODE.LIST
-                  : VISUALISATION_MODE.CARDS
-              )
-            }
-          >
-            Change visualisation
-          </button>
-        </div>
-        {visualisationMode === VISUALISATION_MODE.LIST ? (
-          <table style={{ width: "100%" }}>
-            <thead style={{ backgroundColor: "#AAA" }}>
-              <td>Stock</td>
-              <td>Price (Drop)</td>
-              <td>Price earnings</td>
-              <td>Strategy</td>
-            </thead>
-            {filteredStocks.map(node => (
-              <StockRow stock={node} />
-            ))}
-          </table>
-        ) : (
-          filteredStocks.map(node => <StockCard stock={node} />)
-        )}
+        <StockTable
+          data={data.allGoogleSpreadsheetStonks2020Stonks.nodes}
+          columns={columns}
+        />
       </main>
     </Layout>
   )
@@ -215,6 +280,7 @@ export const query = graphql`
         url
         author
         p_e__priceEarnings_
+        potential
         strategy
         drop
         group
