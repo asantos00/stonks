@@ -5,7 +5,6 @@
   "version": "0.1.0",
   "author": "Kyle Mathews <mathews.kyle@gmail.com>",
   "dependencies": {
-    "babel-plugin-transform-runtime": "^6.23.0",
     "gatsby": "^2.23.3",
     "gatsby-image": "^2.4.7",
     "gatsby-plugin-manifest": "^2.4.11",
@@ -19,12 +18,13 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-helmet": "^6.1.0",
-    "react-table": "^7.2.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-runtime": "^6.26.0"
+    "react-table": "^7.2.0"
   },
   "devDependencies": {
-    "prettier": "2.0.5"
+    "@babel/plugin-transform-regenerator": "^7.10.1",
+    "babel-preset-gatsby": "^0.4.10",
+    "prettier": "2.0.5",
+    "regenerator-runtime": "^0.13.5"
   },
   "keywords": [
     "gatsby"

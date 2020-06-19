@@ -1,3 +1,5 @@
+import "regenerator-runtime/runtime.js"
+
 import React, { useState } from "react"
 import { Link, graphql } from "gatsby"
 
@@ -159,7 +161,7 @@ const columns = [
       const isNA = row.values.p_e__priceEarnings_ === "N/A"
       const textColor = isNA
         ? "grey"
-        : row.values.trend.includes("Bull")
+        : row.values.trend && row.values.trend.includes("Bull")
         ? "green"
         : "red"
 
@@ -278,7 +280,6 @@ export const query = graphql`
         tp__takeProfit_
         trend
         url
-        author
         p_e__priceEarnings_
         potential
         strategy
