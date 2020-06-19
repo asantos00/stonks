@@ -72,7 +72,7 @@ module.exports = {
         mapNode: node => {
           return {
             ...node,
-            today: node.today.replace(",", ""),
+            today: node.today && node.today.replace(",", ""),
           }
         },
       },

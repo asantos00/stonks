@@ -179,6 +179,10 @@ const columns = [
       return value === "Pessimistic" ? "👎" : "👍"
     },
   },
+  {
+    Header: "Author",
+    accessor: row => ["fs", "pm", "nr", "as"].filter(key => row[key]),
+  },
   // Hidden
   {
     Header: "Trend",
@@ -285,6 +289,10 @@ export const query = graphql`
         strategy
         drop
         group
+        as
+        pm
+        nr
+        fs
       }
     }
   }
