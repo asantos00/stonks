@@ -52,9 +52,15 @@ const StockCard = ({ stock }) => (
       Price earnings:{" "}
       <span
         style={{
-          color: stock.trend && stock.trend.includes("Bull") ? "green" : "red",
+          color:
+            parseInt(stock.p_e__priceEarnings_, 10) < 15
+              ? "green"
+              : parseInt(stock.p_e__priceEarnings_, 10) > 30
+              ? "red"
+              : "grey",
         }}
       >
+        {parseInt(stock.p_e__priceEarnings_, 10) < 15}
         {stock.p_e__priceEarnings_}
       </span>
     </h5>
@@ -122,6 +128,7 @@ const columns = [
     Header: "Stock",
     accessor: "stock",
     Cell: ({ row }) => {
+      console.log(row.values)
       return (
         <a
           href={row.values.url}
@@ -153,6 +160,20 @@ const columns = [
   {
     Header: "Potential",
     accessor: "potential",
+    Cell: ({ value }) => (
+      <span
+        style={{
+          color:
+            parseInt(value, 10) > 40
+              ? "green"
+              : parseInt(value, 10) < 20
+              ? "red"
+              : "grey",
+        }}
+      >
+        {value}
+      </span>
+    ),
   },
   {
     Header: "Price earnings",
@@ -161,9 +182,11 @@ const columns = [
       const isNA = row.values.p_e__priceEarnings_ === "N/A"
       const textColor = isNA
         ? "grey"
-        : row.values.trend && row.values.trend.includes("Bull")
+        : parseInt(row.values.p_e__priceEarnings_, 10) < 15
         ? "green"
-        : "red"
+        : parseInt(row.values.p_e__priceEarnings_, 10) > 30
+        ? "red"
+        : "grey"
 
       return (
         <span style={{ color: textColor }}>
@@ -192,6 +215,10 @@ const columns = [
     Header: "Group",
     accessor: "group",
   },
+  {
+    Header: "URL",
+    accessor: "url",
+  },
 ]
 
 const StockTable = ({ data, columns }) => {
@@ -209,7 +236,7 @@ const StockTable = ({ data, columns }) => {
       columns,
       data: data,
       initialState: {
-        hiddenColumns: ["trend", "group"],
+        hiddenColumns: ["trend", "group", "url"],
       },
     },
     useGlobalFilter,
@@ -277,13 +304,13 @@ export const query = graphql`
   query OverviewQuery {
     allGoogleSpreadsheetStonks2020Stonks {
       nodes {
+        url
         buy
         chart
         stock
         today
         tp__takeProfit_
         trend
-        url
         p_e__priceEarnings_
         potential
         strategy
